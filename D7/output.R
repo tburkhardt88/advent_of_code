@@ -32,8 +32,7 @@ current_directory <- "/"
 tree <- vector('list', 1)
 names(tree) <- current_directory
 
-# for(i in 2:length(command_list)){
-for(i in 2:10){
+for(i in 2:length(command_list)){
   type_of_command <- ifelse(grepl('^\\$\\sls', command_list[[i]][1]), 'ls', 'cd')
   
   if(type_of_command == 'cd'){
@@ -71,9 +70,7 @@ for(i in 1:nrow(dir_df)){
 
 head(dir_df[order(-dir_df$total_size),])
 
-nrow(dir_df)
-
-sum(subset(dir_df, size > 100000)$total_size)
+sum(subset(dir_df, size <= 100000)$total_size)
 
 
 
