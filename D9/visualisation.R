@@ -45,4 +45,5 @@ anim2 <- ggplot(filter(rope_df, step < 500), aes(x, y)) +
 
 animate(anim2, fps = 3, duration = 60)
 
+anim_save("ten_knot_rope.gif", anim2)
 
