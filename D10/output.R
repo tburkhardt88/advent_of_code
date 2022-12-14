@@ -30,6 +30,7 @@ for(i in 1:dim(CRT)[1]){
   }
 }
 
+image(t(CRT == "#"))
 
 
 
