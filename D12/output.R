@@ -1,4 +1,5 @@
 lines <- read.table('input.txt')$V1
+# lines <- read.table('test.txt')$V1
 lines <- lapply(lines, function(ln){strsplit(ln, "")[[1]]})
 
 grid <- matrix(nrow = length(lines), ncol = length(lines[[1]]))
@@ -32,10 +33,18 @@ directions <- list(
 grab_potential_locations <- function(current_location){
   ago = which(
     c(
-      height_grid[current_location[1] + 1, current_location[2]] <= height_grid[current_location[1], current_location[2]] + 1,
-      height_grid[current_location[1], current_location[2] + 1] <= height_grid[current_location[1], current_location[2]] + 1,
-      height_grid[current_location[1] - 1, current_location[2]] <= height_grid[current_location[1], current_location[2]] + 1,
-      height_grid[current_location[1], current_location[2] - 1] <= height_grid[current_location[1], current_location[2]] + 1
+      if(current_location[1] <= dim(height_grid)[1]-1){
+        height_grid[current_location[1] + 1, current_location[2]] <= height_grid[current_location[1], current_location[2]] + 1
+      } else {F},
+      if(current_location[2] <= dim(height_grid)[2]-1){
+        height_grid[current_location[1], current_location[2] + 1] <= height_grid[current_location[1], current_location[2]] + 1
+      } else {F},
+      if(current_location[1] > 1){
+        height_grid[current_location[1] - 1, current_location[2]] <= height_grid[current_location[1], current_location[2]] + 1
+      } else {F},
+      if(current_location[2] > 1){
+        height_grid[current_location[1], current_location[2] - 1] <= height_grid[current_location[1], current_location[2]] + 1
+      } else {F}
     )
   )
   
@@ -47,23 +56,55 @@ grab_potential_locations <- function(current_location){
 
 
 
-path_tree <- list(list(start))
-been_there <- matrix(FALSE, nrow = dim(height_grid)[1], ncol = dim(height_grid)[2])
-been_there[start[1], start[2]] <- TRUE
-end_found <- FALSE
-step = 1
-
-while(!end_found){
-  locs <- lapply(path_tree[[step]], function(cl){grab_potential_locations(cl)})
-  locs <- lapply(rapply(locs, enquote, how="unlist"), eval)
+path_finder <- function(start){
+  path_tree <- list(list(start))
+  end_found <- FALSE
+  step = 1
   
-  for(i in 1:length(locs)){been_there[locs[[i]][1], locs[[i]][2]] = TRUE}
+  while(!end_found){
+    locs <- lapply(path_tree[[step]], function(cl){grab_potential_locations(cl)})
+    locs <- lapply(rapply(locs, enquote, how="unlist"), eval)
+    locs <- unique(locs)
+    if(length(locs) == 0){break}
+    
+    for(i in 1:length(locs)){been_there[locs[[i]][1], locs[[i]][2]] <<- TRUE}
+    
+    path_tree[[step + 1]] <- locs
+    
+    step = step + 1
+    end_found = any(sapply(locs, function(lc){all(lc == end)}))
+  }
   
-  path_tree[[step + 1]] <- locs
+  if(end_found){
+    return(length(path_tree) - 1)
+  } else {
+    return(Inf)
+  }
   
-  step = step + 1
-  end_found = any(sapply(locs, function(lc){all(lc == end)}))
 }
 
-path_tree[[21]]
+been_there <- matrix(FALSE, nrow = dim(height_grid)[1], ncol = dim(height_grid)[2])
+been_there[start[1], start[2]] <- TRUE
+path_finder(start)
 
+#Part 2
+
+low_coords <- lapply(which(height_grid == 1), function(x){
+  c(
+    ifelse(x%%dim(height_grid)[1] == 0, dim(height_grid)[1], x%%dim(height_grid)[1]),
+    ifelse(x == length(height_grid), 
+           161, 
+           ifelse(x%%dim(height_grid)[1] == 0,  
+                  x%/%dim(height_grid)[1], 
+                  x%/%dim(height_grid)[1] + 1))
+  )
+})
+
+path_lengths <- vector(mode = 'numeric', length = length(low_coords))
+for(i in 1:length(low_coords)){
+  been_there <- matrix(FALSE, nrow = dim(height_grid)[1], ncol = dim(height_grid)[2])
+  been_there[low_coords[[i]][1], low_coords[[i]][2]] <- TRUE
+  path_lengths[i] <- as.numeric(path_finder(low_coords[[i]]))
+}
+
+min(path_lengths)
