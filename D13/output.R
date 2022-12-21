@@ -33,5 +33,32 @@ lists <- data.frame(
 )
 lists$range <- lists$B - lists$A - 1
 lists <- lists[order(-lists$range),]
+rownames(lists) <- 1:nrow(lists)
 
+lists$within <- list(numeric())
+for(i in 1:c(nrow(lists) - 1)){
+  rng = lists$A[i]:lists$B[i]
+  for(j in (i+1):nrow(lists)){
+    if(lists$A[j] > lists$A[i] & lists$B[j] < lists$B[i] & all(lists$A[j]:lists$B[j] %in% rng)){
+      lists$within[[i]] <- c(lists$within[[i]], j)
+      rng = setdiff(rng, lists$A[j]:lists$B[j])
+    }
+  }
+}
+
+lists$string <- character(nrow(lists))
+for(i in 1:nrow(lists)){
+  lists$string[[i]] <- substr(x, lists$A[i], lists$B[i])
+}
+
+grp = 3
+z <- list()
+for(i in 1:length(lists$within[[grp]])){
+  sb_grp = lists$within[[grp]][i]
+
+  z[[i]] <- c(lists$A[sb_grp], lists$B[sb_grp])
+}
+z <- setdiff((lists$A[grp] + 1) : (lists$B[grp] - 1), unlist(lapply(z, function(gp){gp[1]:gp[2]})))
+
+diff(z)
 
